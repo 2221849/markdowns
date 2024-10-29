@@ -170,6 +170,8 @@ The project's non-functional requirements are as follows:
 
 As mentioned earlier, the project will include a database that uses technology selected by the students, provided it is an open-source database system or a free external service. Additionally, a fully functional database will be available for students to use directly or modify as needed. The database structure is defined through Laravel migrations and populated with sample data using a provided Laravel seeder. The database structure is as follows:
 
+[dbdiagram.io](https://dbdiagram.io/d/DAD-671eb65d97a66db9a36f7951)
+
 > _Note: All users have the same password: “_ **_123_** _”_
 
 ### **TABLES AND COLUMNS**
