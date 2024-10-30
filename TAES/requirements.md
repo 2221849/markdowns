@@ -1,0 +1,13 @@
+# Advanced Software Engineering
+
+1. **Login and Anonymous Mode**: When starting the app, users are presented with a login screen. Registered users can log in using their credentials, while those who prefer not to log in will play as anonymous users. Anonymous users have limited access to game features but can still play on a 3x4 board. Logged-in users will have full access to the platform's features, including larger boards, game history, scoreboard, and game coins. Registeration is managed by the centralized support system, which means that while users can log in via the mobile app an account must already exist.
+
+2. **Dashboard**: After logging in (or skipping login as an anonymous user), users are presented with a dashboard. The dashboard should allow accessing various app elements, including: button(s) to start a new game; game coins (for registered users); game history (for registered users); and scoreboards (for registered users).
+
+3. **Single-player Mode**: The app will support various board sizes: 3x4 (available to all users, including anonymous ones), 4x4 (for registered users); and 6x6 (for registered users). The game will track the time taken to complete each game, which will be displayed at the end.
+
+4. **Game Coins**: Registered users will have a credit system in the form of “game coins”. Users can purchase additional game coins using real money; however, the process of purchasing or charging game coins is only handled through the centralized support system (which will be developed in the other course). Each single-player game (excluding the 3x4 board) costs 1 game coin. Registered users can also buy hints for 1 game coin during the game – a hint will reveal the location of one pair of matching tiles. If a registered user beats his previous best time, or if he achieves a top 3 global best time, for any board size while playing on mobile, they will gain 1 additional game coin as a reward.
+
+5. **Notifications**: Users will receive notifications within the app, such as when they have successfully purchased game coins, beaten a record, or received rewards like bonus coins after completing a game.
+
+6. **Game History and Scoreboards**: The application will track all games played by registered users, allowing them to view their personal game history. Registered users will have access to both personal scoreboards and global scoreboards; anonymous users will only have access to global scoreboards. Personal Scoreboards track a specific user’s best performances across different board sizes, including the shortest time and the minimum number of turns. Global scoreboards display top players based on their best times and lowest turn counts on various board sizes.
