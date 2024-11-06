@@ -16,7 +16,7 @@
 **Xml Schema File**:
 
 ```xml
-<xs:schema attributeformDefault="unqualified" elementformDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:element name="contacto">
     <xs:complexType>
       <xs:sequence>
@@ -65,7 +65,7 @@
 
 **No paradigma de comunicação Publish/Subscribe (publica/subscreve), que papel está atribuído à entidade que produz informação?**
 
-- [ ] Subscriber ("subscritor")
+- [ ] Subscriber ("subscritor").
 - [x] Publisher ("publicador").
 - [ ] Nenhuma das outras opções.
 - [ ] Broker de mensagens.
@@ -75,13 +75,13 @@
 **Qual das seguintes afirmações está correta, no contexto dos Web Services?**
 
 - [ ] Um Web Service é uma coleção de protocolos abertos e standards utilizados para a troca de dados entre aplicações ou sistemas.
-- [ ] Aplicações de software implementadas em várias linguagens de programação e executadas em diferentes plataformas podem usar serviços web para trocar dados e através da internet.
+- [ ] Aplicações de software implementadas em várias linguagens de programação e executadas em diferentes plataformas podem usar serviços web para trocar dados através da internet.
 - [x] Ambas as opções anteriores.
 - [ ] Nenhuma das opções.
 
 ## Pergunta 6
 
-**Considere a integração ponto-a-ponto e a integração por middleware com vista à interligação entre 6 aplicações. Para cada abordagem apresentada, quantas ligações tera mantidas/geridas?**
+**Considere a integração ponto-a-ponto e a integração por middleware com vista à interligação entre 6 aplicações. Para cada abordagem apresentada, quantas ligações terão de ser mantidas/geridas?**
 
 - [x] Ponto-a-Ponto: 15 ligações; Middleware: 6 ligações.
 - [ ] Ponto-a-Ponto: 3 ligações; Middleware: 6 ligações.
@@ -90,7 +90,7 @@
 
 ## Pergunta 7
 
-**Na perspetiva do cliente, qual das rotas apresentadas permite retornar um determinado recurso do tipo *Spot***:
+**Na perspetiva do cliente, qual das rotas apresentadas permite retornar um determinado recurso do tipo *Spot*?**
 
 **Exemplo 1**:
 
@@ -116,6 +116,7 @@ public IHttpActionResult GetSpotByPark(string spotId, string parkName)
 ## Pergunta 8
 
 **Num documento XML bem formado, o nome do mesmo elemento pode ser escrito com letras maiúsculas e/ou minúsculas.**
+
 **Selecione uma opção:**
 
 - [ ] Verdadeiro
@@ -124,6 +125,7 @@ public IHttpActionResult GetSpotByPark(string spotId, string parkName)
 ## Pergunta 9
 
 **Considere a implementação de um RESTful Web Service usando a ASP.NET Web API, no qual está definido um controller para cada recurso a disponibilizar pelo serviço.**
+
 **Qual é o objetivo do(s) controller(s) na ASP.NET Web API framework?**
 
 - [ ] Servem para apresentar e representar os dados ao utilizador final, normalmente no ecrã.
@@ -133,7 +135,7 @@ public IHttpActionResult GetSpotByPark(string spotId, string parkName)
 
 ## Pergunta 10
 
-**Qual a expressão XPath que permite obter o primeiro elemento *purchase* que possua o atributo *discount* superior a 5%.**
+**Qual a expressão XPath que permite obter o primeiro elemento *purchase* que possua o atributo *discount* superior a 5%?**
 
 - [ ] `purchase [discount>5][1]`
 - [x] Nenhuma das outras opções.
@@ -179,6 +181,7 @@ public IHttpActionResult GetSpotByPark(string spotId, string parkName)
 ## Pergunta 15
 
 **Sobre a arquitetura orientada a serviços (SOA) pode-se dizer que parte dos seus princípios são o desacoplamento, abstração e autonomia.**
+
 **Selecione uma opção:**
 
 - [x] Verdadeiro
@@ -196,7 +199,7 @@ public IHttpActionResult GetSpotByPark(string spotId, string parkName)
 - [x] PUT
 - [ ] DELETE
 
-**Proponha a URI indicada para o efeito**:
+**Proponha a URI indicada para o efeito:**
 
 - [ ] <http://localhost:port/food>
 - [ ] <http://localhost:port/food/{id}>
@@ -211,7 +214,7 @@ public IHttpActionResult GetSpotByPark(string spotId, string parkName)
 
 ## Pergunta 18
 
-**Na perspetiva do cliente REST, qual a diferença entre declarar a implementação da resposta ao GET como**:
+**Na perspetiva do cliente REST, qual a diferença entre declarar a implementação da resposta ao GET como:**
 
 ```c#
 public Customer[] GetAllCustomers()
@@ -227,17 +230,17 @@ public Customer[] GetCustomers()
 **usando a convenção de nomes?**
 
 - [ ] Apenas a versão GetAllCustomers faz sentido
-- [ ] Ambas estão erradas já que não seguem a convenção de nomes
+- [ ] Ambas estão erradas já que não seguem a convenção de nomes.
 - [x] Não há qualquer diferença.
-- [ ] Apenas a versão GetCustomers faz sentido
+- [ ] Apenas a versão GetCustomers faz sentido.
 
 ## Pergunta 19
 
 **Que standard RPC (Remote Procedure Call) é utilizado pelos SOAP Web Services?**
 
-- [ ] TCP (Transmission Control Protocol)
+- [ ] TCP (Transmission Control Protocol).
 - [ ] WSDL (Web Service Description Language).
-- [x] SOAP (Simple Object Access Protocol)
+- [x] SOAP (Simple Object Access Protocol).
 - [ ] Nenhuma das outras opções.
 
 ## Pergunta 20
@@ -245,6 +248,6 @@ public Customer[] GetCustomers()
 **O que é um canal criado dentro de um sistema de mensagens?**
 
 - [ ] Nenhuma das outras opções.
-- [ ] Não é mais do que um ficheiro para partilha de informação entre aplicações
+- [ ] Não é mais do que um ficheiro para partilha de informação entre aplicações.
 - [ ] Não é mais do que uma diretoria para partilha de informação entre aplicações.
-- [x] É um tópico de "conversação para troca de informação entre aplicações".
+- [x] É um tópico de "conversação" para troca de informação entre aplicações.
