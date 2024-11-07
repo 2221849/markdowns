@@ -185,11 +185,7 @@ END;
 
 - **Condition**: If the brand field in `t_data_products` contains a value found in the `brand_wrong` column of `t_lookup_brands`, the row is flagged as problematic.
 
-### Transformation Procedures
-
-This document provides transformation procedures for `products` and `promotions`. These procedures clean data and correct inconsistencies according to a defined data map. Please remember to call each procedure after defining it.
-
-#### `TRANSFORM_PRODUCTS`
+### `TRANSFORM_PRODUCTS`
 
 The `TRANSFORM_PRODUCTS` procedure corrects any detected errors in the `brand` column based on flagged entries and populates the `t_clean_products` table with transformed data.
 
@@ -254,8 +250,6 @@ WHERE
 
 The `TRANSFORM_PROMOTIONS` procedure normalizes data in the `t_clean_promotions` table and ensures promotions data aligns with the logical data map.
 
-#### Promotion Transformation SQL
-
 ```sql
 -- ******************************************************************
 -- * TRANSFORMATION OF PROMOTIONS ACCORDING TO THE LOGICAL DATA MAP *
@@ -308,6 +302,6 @@ EXCEPTION
 END;
 ```
 
-#### Calling the Procedures
+### Calling the Procedures
 
 Ensure that you call both `TRANSFORM_PRODUCTS` and `TRANSFORM_PROMOTIONS` procedures after defining them in the correct order, if necessary, to complete the transformation process.
