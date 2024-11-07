@@ -45,7 +45,7 @@ table_extract(
 table_extract_non_incremental(
   'view_registos@dblink_sadsb',
   't_data_customers_reg',
-  'src_card_number,src_customer_name,src_customer_type,src_register_date',
+  'src_card_number,src_customer_type',
   'card_number,customer_type'
 );
 ```
