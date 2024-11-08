@@ -50,7 +50,7 @@ Escreva 5 questões/perguntas que faria numa reunião com os **developers** e de
 
 **9.** Considere a seguinte Figura:
 
-![alt text](nomnoml.png)
+![alt text](https://imgur.com/PxKPrzd)
 
 **a)** Qual o principal propósito do componente Assembler, nesta Figura? Exemplifique.
 
