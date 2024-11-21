@@ -192,9 +192,9 @@ public IHttpActionResult GetSpotByPark(string spotId, string parkName)
 **No caso dos SOAP Web Services, que operação é necessária ser realizada pelo cliente antes de invocar o serviço?**
 
 - [ ] Indicar ação HTTP a usar na chamada (GET, PUT, POST, DELETE).
-- [ ] E necessário escolher em que formato pretendemos a resposta, XML ou JSON.
+- [ ] É necessário escolher em que formato pretendemos a resposta, XML ou JSON.
 - [ ] Nenhuma das outras opções.
-- [ ] É necessário observar e obter o Endpoint (IP e porto) onde o serviço está a correr.
+- [x] É necessário observar e obter o Endpoint (IP e porto) onde o serviço está a correr.
 
 ## Pergunta 17
 
