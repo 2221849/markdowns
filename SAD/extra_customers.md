@@ -1,12 +1,6 @@
 # **Decision Support Systems: Extra Customers**
 
-## **ETL Workflow**
-
-The **ETL (Extract, Transform, Load)** process for handling customer data is structured as follows. This document outlines the steps and SQL implementations for each phase, providing a clear and concise guide for creating and managing the necessary data flows.
-
----
-
-## **1. Extraction Phase**
+## **Extraction Phase**
 
 ### **Objective**
 
@@ -14,7 +8,36 @@ Extract raw customer data from the source table `view_clientes@dblink_sadsb` and
 
 ### **Implementation**
 
-#### **Procedure: `table_extract`**
+#### **Staging Tables**
+
+Ensure that the staging tables T_DATA_CUSTOMERS and T_DATA_CUSTOMERS_REG exist. If not, create them as follows:
+
+```sql
+CREATE TABLE T_DATA_CUSTOMERS(
+  ID INTEGER,
+  CARD_NUMBER VARCHAR2(20),
+  NAME VARCHAR2(40),
+  ADDRESS VARCHAR2(60),
+  LOCATION VARCHAR2(60),
+  DISTRICT VARCHAR2(40),
+  ZIP_CODE VARCHAR2(8),
+  PHONE_NR NUMBER(9),
+  GENDER CHAR(10),
+  AGE NUMBER(3),
+  MARITAL_STATUS CHAR(1),
+  REJECTED_BY_SCREEN CHAR DEFAULT(0)
+);
+
+CREATE TABLE T_DATA_CUSTOMERS_REG(
+  CARD_NUMBER VARCHAR2(20),
+  CUSTOMER_TYPE VARCHAR2(10),
+  REJECTED_BY_SCREEN CHAR DEFAULT(0)
+);
+```
+
+#### **Data Extraction Procedure**
+
+Use the `table_extract` procedure to move data from the source to the staging table:
 
 ```sql
 table_extract(
@@ -40,17 +63,15 @@ SELECT * FROM T_DATA_CUSTOMERS; -- Verify loaded data
 SELECT * FROM T_INFO_EXTRACTIONS; -- Check extraction info
 ```
 
----
-
-## **2. Transformation Phase**
+## **Transformation Phase**
 
 ### **Objective**
 
 Clean, standardize, and validate the extracted customer data to ensure consistency and readiness for loading into the dimensional model.
 
-### **Steps**
+### **Implementation**
 
-#### **Step 1: Create Transformation Table**
+#### **Create Transformation Table**
 
 Create the intermediate table `T_CLEAN_CUSTOMERS` to store cleaned and validated data.
 
@@ -71,11 +92,7 @@ CREATE TABLE T_CLEAN_CUSTOMERS(
 );
 ```
 
----
-
-#### **Step 2: Transformation Procedure**
-
-##### **Procedure: `transform_customers`**
+#### **Procedure: `transform_customers`**
 
 Transform and clean data according to the logical data map:
 
@@ -85,47 +102,47 @@ PROCEDURE transform_customers IS BEGIN
 
 INSERT INTO
   T_CLEAN_CUSTOMERS(
-    id,
-    card_number,
-    name,
-    address,
-    location,
-    district,
-    zip_code,
-    phone_nr,
-    gender,
-    age,
-    marital_status,
-    customer_type
+    ID,
+    CARD_NUMBER,
+    NAME,
+    ADDRESS,
+    LOCATION,
+    DISTRICT,
+    ZIP_CODE,
+    PHONE_NR,
+    GENDER,
+    AGE,
+    MARITAL_STATUS,
+    CUSTOMER_TYPE
   )
 SELECT
-  id,
-  r.card_number,
-  UPPER(name),
-  UPPER(address),
-  UPPER(location),
-  UPPER(district),
-  zip_code,
-  phone_nr,
+  ID,
+  R.CARD_NUMBER,
+  UPPER(NAME),
+  UPPER(ADDRESS),
+  UPPER(LOCATION),
+  UPPER(DISTRICT),
+  ZIP_CODE,
+  PHONE_NR,
   CASE
-    UPPER(gender)
+    UPPER(GENDER)
     WHEN 'M' THEN 'MALE'
     WHEN 'F' THEN 'FEMALE'
     ELSE 'OTHER'
-  END age,
+  END AGE,
   CASE
-    UPPER(marital_status)
+    UPPER(MARITAL_STATUS)
     WHEN 'C' THEN 'MARRIED'
     WHEN 'S' THEN 'SINGLE'
     WHEN 'V' THEN 'WIDOW'
     WHEN 'D' THEN 'DIVORCED'
     ELSE 'OTHER'
-  END UPPER(customer_type)
+  END UPPER(CUSTOMER_TYPE)
 FROM
   T_DATA_CUSTOMERS C
-  JOIN T_DATA_CUSTOMERS_REG r ON C .card_number = r.card_number
+  JOIN T_DATA_CUSTOMERS_REG R ON C.CARD_NUMBER = R.CARD_NUMBER
 WHERE
-  C .rejected_by_screen = '0' -- Only include records that have not been rejected by the screen
+  C.REJECTED_BY_SCREEN = '0' -- Only include records that have not been rejected by the screen
 END;
 
 pck_log.write_log('    Done!');
@@ -140,7 +157,10 @@ RAISE e_transformation;
 END;
 ```
 
----
+#### **Updates to `main`**
+
+- Include a `DELETE FROM` statement to clear `T_CLEAN_CUSTOMERS`.
+- Add a call to the `transform_customers` procedure.
 
 #### **Validation Steps**
 
@@ -157,17 +177,15 @@ SELECT * FROM T_LOG_ETL; -- Verify ETL logs
 SELECT * FROM T_CLEAN_CUSTOMERS; -- Validate cleaned data
 ```
 
----
-
 ## **3. Loading Phase**
 
 ### **Objective**
 
 Load the cleaned and transformed customer data into the dimensional model (`T_DIM_CUSTOMER`), applying Slowly Changing Dimensions (SCD) as necessary.
 
-### **Steps**
+### **Implementation**
 
-#### **Step 1: Dimensional Table**
+#### **Dimensional Table**
 
 ```sql
 CREATE TABLE T_DIM_CUSTOMER(
@@ -189,11 +207,7 @@ CREATE TABLE T_DIM_CUSTOMER(
 );
 ```
 
----
-
-#### **Step 2: Load Procedure**
-
-#### **Procedure: `LOAD_DIM_CUSTOMER`**
+#### **Load Procedure**
 
 Implements SCD logic for detecting changes and updating the dimensional table:
 
@@ -415,7 +429,101 @@ RAISE E_LOAD;
 END;
 ```
 
----
+#### **Changes on `init_dimensions`**
+
+```sql
+-- 'INVALID CUSTOMER'
+INSERT INTO
+  T_DIM_CUSTOMER (
+    CUSTOMER_KEY,
+    CUSTOMER_NATURAL_KEY,
+    CUSTOMER_CARD_NUMBER,
+    CUSTOMER_NAME,
+    CUSTOMER_ADDRESS,
+    CUSTOMER_LOCATION,
+    CUSTOMER_DISTRICT,
+    CUSTOMER_ZIP_CODE,
+    CUSTOMER_PHONE_NR,
+    CUSTOMER_GENDER,
+    CUSTOMER_GENDER_OLD,
+    CUSTOMER_AGE,
+    CUSTOMER_MARITAL_STATUS,
+    IS_EXPIRED_VERSION
+  )
+VALUES
+  (
+    pck_error_codes.c_load_invalid_dim_record_key,
+    pck_error_codes.c_load_invalid_dim_record_Nkey,
+    NULL,
+    'INVALID CUSTOMER',
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    'NO'
+  );
+```
+
+#### **Procedure: `load_fact_table`**
+
+Update the `load_fact_table` procedure to incorporate the customer dimension.
+
+```sql
+PROCEDURE load_fact_table IS
+BEGIN
+   -- Insert data into the fact table `t_fact_lineofsale`
+   INSERT INTO t_fact_lineofsale (
+      product_key,
+      store_key,
+      promo_key,
+      date_key,
+      time_key,
+      customer_key,
+      sold_quantity,
+      ammount_paid,
+      sale_id_dd
+   )
+   SELECT
+      -- Use default error codes for invalid dimension records
+      NVL(product_key, pck_error_codes.c_load_invalid_dim_record_key),
+      NVL(store_key, pck_error_codes.c_load_invalid_dim_record_key),
+      NVL(promo_key, pck_error_codes.c_load_invalid_dim_record_key),
+      NVL(date_key, pck_error_codes.c_load_invalid_dim_record_key),
+      NVL(time_key, pck_error_codes.c_load_invalid_dim_record_key),
+      NVL(customer_key, pck_error_codes.c_load_invalid_dim_record_key),
+      clean.quantity,
+      clean.ammount_paid,
+      clean.sale_id
+   FROM
+      t_clean_linesofsale clean
+      -- Join with product dimension; exclude expired products
+      LEFT JOIN t_dim_product
+         ON clean.product_id = product_natural_key
+         AND t_dim_product.is_expired_version = 'NO'
+      -- Join with store dimension; exclude expired stores
+      LEFT JOIN t_dim_store
+         ON clean.store_id = store_natural_key
+         AND t_dim_store.is_expired_version = 'NO'
+      -- Join with promotion dimension
+      LEFT JOIN t_dim_promotion
+         ON clean.promo_id = promo_natural_key
+      -- Join with date dimension using formatted date
+      LEFT JOIN t_dim_date
+         ON TO_CHAR(clean.line_date, 'dd/mm/yyyy') = date_full_date
+      -- Join with time dimension using formatted time
+      LEFT JOIN t_dim_time
+         ON TO_CHAR(clean.line_date, 'hh24:mi:ss') = time_full_time
+      -- Join with customer dimension; exclude expired customers
+      LEFT JOIN t_dim_customer
+         ON clean.customer_id = customer_natural_key
+         AND t_dim_customer.is_expired_version = 'NO';
+END;
+```
 
 ## **4. Testing and Validation**
 
@@ -452,8 +560,6 @@ Perform the following tests:
    SELECT * FROM T_FACT_LINEOFSALE; -- Validate related data
    SELECT * FROM T_LOG_ETL; -- Check logs for errors
    ```
-
----
 
 ## **Conclusion**
 
