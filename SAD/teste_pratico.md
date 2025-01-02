@@ -21,7 +21,7 @@ id;code;name;discount;start_date;end_date;type
 
 ```sql
 CREATE TABLE T_EXT_COUPONS (
-  CODE CHAR(9),
+  CODE NUMBER,
   NAME VARCHAR2(100),
   DISCOUNT NUMBER,
   START_DATE DATE,
