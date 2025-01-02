@@ -81,7 +81,7 @@ DELETE FROM t_data_coupons_old;
 pck_log.write_log('      Done!');
 ```
 
-- Call `file_extract` on coupons
+Call `file_extract` on coupons
 
 ```sql
 -- EXTRAÇÃO DINÁMICA
@@ -93,6 +93,18 @@ file_extract (
   'T_DATA_COUPONS_NEW',
   'T_DATA_COUPONS_OLD'
 );
+```
+
+**Extraction Validation Steps**:
+
+```sql
+BEGIN
+    PCK_EXTRACT.main(TRUE); -- Load data with full extraction
+END;
+/
+SELECT * FROM T_LOG_ETL; -- Check ETL log for errors
+SELECT * FROM T_DATA_COUPONS_NEW; -- Verify loaded data
+SELECT * FROM T_DATA_COUPONS_OLD; -- Verify loaded data
 ```
 
 ## TRANSFORMATION
