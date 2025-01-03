@@ -1,8 +1,10 @@
 # Decision Support Systems
 
-## EXTRACTION
+## **Extraction**
 
-**"coupons.csv":**
+### **Source File: `coupons.csv`**
+
+The file contains coupon data in the following format:
 
 ```csv
 Ficheiro de Cupões;;;;;;
@@ -18,6 +20,8 @@ id;code;name;discount;start_date;end_date;type
 6;123456786;Sumos e Refrigerantes;35;07-01-2024;02-02-2024;2
 7;123456787;Compra em Loja;150;15-01-2024;28-01-2024;0
 ```
+
+### **External Table Creation**
 
 ```sql
 CREATE TABLE T_EXT_COUPONS (
@@ -52,6 +56,8 @@ CREATE TABLE T_EXT_COUPONS (
 ) REJECT LIMIT UNLIMITED;
 ```
 
+### **Data Staging**
+
 ```sql
 CREATE TABLE T_DATA_COUPONS_NEW (
     CODE NUMBER,
@@ -68,16 +74,18 @@ CREATE TABLE T_DATA_COUPONS_NEW (
 CREATE TABLE T_DATA_COUPONS_OLD AS SELECT * FROM T_DATA_COUPONS_NEW;
 ```
 
-Clean `T_DATA_COUPON_NEW` and `T_DATA_COUPON_OLD` with `initialize_extractions_table`
+### **Data Cleaning**
+
+Clean `T_DATA_COUPON_NEW` and `T_DATA_COUPON_OLD` on `initialize_extractions_table`:
 
 ```sql
--- ...
+...
 DELETE FROM t_data_coupons_new;
 DELETE FROM t_data_coupons_old;
 pck_log.write_log('      Done!');
 ```
 
-Call `file_extract` on coupons
+### **Extracting Data**
 
 ```sql
 file_extract (
@@ -89,11 +97,11 @@ file_extract (
 );
 ```
 
+### **Update Line of Sale Table**
+
 ```sql
 ALTER TABLE T_DATA_LINESOFSALE ADD COUPON_ID NUMBER(10);
 ```
-
-Add/Alter `table_extract` call on line of sale with new attibute `COUPON_ID`
 
 ```sql
 table_extract(
@@ -104,7 +112,7 @@ table_extract(
 );
 ```
 
-**Extraction Validation Steps**:
+### **Extraction Validation**
 
 ```sql
 BEGIN
@@ -116,14 +124,11 @@ SELECT * FROM T_DATA_COUPONS_NEW; -- Verify loaded data
 SELECT * FROM T_DATA_COUPONS_OLD; -- Verify loaded data
 ```
 
-## TRANSFORMATION
+## **Transformation**
 
-Add new source to `T_TEL_SOURCE` and new screen in `T_TEL_SCREEN`
+### **Register New Source and Screen**
 
 ```sql
-SELECT * FROM T_TEL_SOURCE;
-DESC T_TEL_SOURCE;
-
 INSERT INTO T_TEL_SOURCE (
     SOURCE_FILE_NAME,
     SOURCE_HOST_IP,
@@ -136,12 +141,9 @@ VALUES (
     'Windows 10',
     'Ficheiro contendo informação dos coupons'
 );
+```
 
-SELECT * FROM T_TEL_SOURCE;
-
-SELECT * FROM T_TEL_SCREEN;
-DESC T_TEL_SCREEN;
-
+```sql
 INSERT INTO T_TEL_SCREEN (
     SCREEN_NAME,
     SCREEN_CLASS,
@@ -150,11 +152,11 @@ INSERT INTO T_TEL_SCREEN (
 VALUES (
     'SCREEN_COUPON',
     'CORREÇÃO',
-    'Disconto ou data inválidas'
+    'Disconto ou datas inválidas'
 );
-
-SELECT * FROM T_TEL_SCREEN;
 ```
+
+### **Prepare Cleaned Tables**
 
 ```sql
 ALTER TABLE T_CLEAN_LINESOFSALE ADD COUPON_ID INTEGER;
@@ -170,7 +172,7 @@ CREATE TABLE T_CLEAN_COUPONS (
 );
 ```
 
-Implement `screen_coupon`
+### **Procedure: `screen_coupon`**
 
 ```sql
 PROCEDURE screen_coupon (
@@ -248,6 +250,8 @@ PROCEDURE screen_coupon (
 );
 ```
 
+### **Procedure: `transform_lineofsale`**
+
 Update `transform_lineofsale` (new attribute in `T_CLEAN_LINESOFSALE`)
 
 ```sql
@@ -303,10 +307,7 @@ RAISE e_transformation;
 END;
 ```
 
-**Updates main:**
-
-- `DELETE FROM T_CLEAN_COUPONS;`
-- `transform_coupons`
+### **Procedure: `transform_coupons`**
 
 ```sql
 PROCEDURE transform_coupons IS BEGIN
@@ -349,7 +350,22 @@ RAISE e_transformation;
 END;
 ```
 
-**Transformation Validation Steps**:
+### **Updates in Main**
+
+Clean the `T_CLEAN_COUPONS` table:
+
+```sql
+DELETE FROM T_CLEAN_COUPONS;
+```
+
+Call the `transform_coupons` procedure:
+
+```sql
+...
+transform_coupons;
+```
+
+### **Transformation Validation**
 
 ```sql
 BEGIN
@@ -363,7 +379,9 @@ SELECT * FROM T_CLEAN_LINESOFSALE; -- Validate cleaned data
 SELECT * FROM T_CLEAN_COUPONS; -- Validate cleaned data
 ```
 
-## LOAD
+## **Load**
+
+### **Dimension Table Creation**
 
 ```sql
 CREATE TABLE T_DIM_COUPON (
@@ -382,7 +400,7 @@ CREATE TABLE T_DIM_COUPON (
 CREATE SEQUENCE SEQ_COUPON_KEY;
 ```
 
-Create init_dimensions for coupons
+### **Initialize Coupon Dimension**
 
 ```sql
 INSERT INTO
@@ -411,7 +429,9 @@ VALUES
 ALTER TABLE T_DIM_LINESOFSALE ADD COUPON_KEY INTEGER;
 ```
 
-Implement `load_coupon` with SCD2 on `COUPON_TYPE`
+### **Load Procedure**
+
+Implement `load_dim_coupon` with SCD2 on `COUPON_TYPE`
 
 ```sql
 PROCEDURE load_dim_coupon IS -- Cursor to fetch cleaned product data
@@ -557,10 +577,10 @@ RAISE e_load;
 END;
 ```
 
-Call `load_coupon` in main
+Call `load_dim_coupon` in main
 
 ```sql
--- ...
+...
 load_dim_coupon;
 load_fact_table;
 ```
@@ -569,7 +589,7 @@ Change `T_FACT_LINEOFSALE` with new key
 
 <!-- TODO -->
 
-**Load Validation Steps**:
+### **Load Validation**
 
 ```sql
 BEGIN
