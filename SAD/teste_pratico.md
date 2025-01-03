@@ -2,7 +2,7 @@
 
 ## EXTRACTION
 
-### "coupons.csv"
+**"coupons.csv":**
 
 ```csv
 Ficheiro de Cupões;;;;;;
@@ -303,7 +303,7 @@ RAISE e_transformation;
 END;
 ```
 
-**Update main:**
+**Updates main:**
 
 - `DELETE FROM T_CLEAN_COUPONS;`
 - `transform_coupons`
@@ -366,18 +366,15 @@ SELECT * FROM T_CLEAN_COUPONS; -- Validate cleaned data
 ## LOAD
 
 ```sql
-ALTER TABLE T_DIM_LINESOFSALE ADD coupon_key INTEGER;
-```
-
-```sql
 CREATE TABLE T_DIM_COUPON (
-    COUPON_KEY NUMBER PRIMARY KEY,
-    COUPON_NATURAL_KEY NUMBER NOT NULL UNIQUE,
-    COUPON_NAME VARCHAR2(255) NOT NULL,
-    COUPON_DISCOUNT_PERCENTAGE NUMBER NOT NULL,
-    COUPON_DURATION_DAYS NUMBER NOT NULL,
-    COUPON_TYPE NUMBER NOT NULL,
-    IS_EXPIRED_VERSION VARCHAR2(3)
+    COUPON_KEY NUMBER(12),
+    COUPON_NATURAL_KEY NUMBER,
+    COUPON_NAME VARCHAR2(100 CHAR),
+    COUPON_DISCOUNT_PERCENTAGE NUMBER(3),
+    COUPON_DURATION_DAYS NUMBER(3),
+    COUPON_TYPE VARCHAR2(10 CHAR),
+    IS_EXPIRED_VERSION VARCHAR2(3 CHAR),
+    CONSTRAINT PK_TDIMCOUPON_KEY PRIMARY KEY (COUPON_KEY)
 );
 ```
 
@@ -385,12 +382,202 @@ CREATE TABLE T_DIM_COUPON (
 CREATE SEQUENCE SEQ_COUPON_KEY;
 ```
 
-- Create init_dimensions
-- Implement SCD
-- Change `T_FACT_LINEOFSALE` with new key
+Create init_dimensions for coupons
 
 ```sql
-ALTER TABLE T_CLEAN_LINESOFSALE ADD COUPON_ID INTEGER;
+INSERT INTO
+  T_DIM_COUPON (
+    COUPON_KEY,
+    COUPON_NATURAL_KEY,
+    COUPON_NAME,
+    COUPON_DISCOUNT_PERCENTAGE,
+    COUPON_DURATION_DAYS,
+    COUPON_TYPE,
+    IS_EXPIRED_VERSION
+  )
+VALUES
+  (
+    PCK_ERROR_CODES.C_LOAD_INVALID_DIM_RECORD_KEY,
+    PCK_ERROR_CODES.C_LOAD_INVALID_DIM_RECORD_NKEY,
+    'INVALID COUPON',
+    NULL,
+    NULL,
+    NULL,
+    'NO'
+  );
 ```
 
-- Call `load_coupon` in main
+```sql
+ALTER TABLE T_DIM_LINESOFSALE ADD COUPON_KEY INTEGER;
+```
+
+Implement `load_coupon` with SCD2 on `COUPON_TYPE`
+
+```sql
+PROCEDURE load_dim_coupon IS -- Cursor to fetch cleaned product data
+CURSOR coupons_cursor IS
+SELECT
+  CODE,
+  NAME,
+  DISCOUNT,
+  DURATION_DAYS,
+  TYPE_DESCRIPTION
+FROM
+  T_CLEAN_COUPONS;
+
+-- Statistic counters
+i INTEGER := 0;
+
+V_NEW_COUPONS INTEGER := 0;
+
+V_NEW_VERSIONS INTEGER := 0;
+
+V_OLD_VERSIONS INTEGER := 0;
+
+-- Coupon Key
+V_COUPON_KEY T_DIM_COUPON.COUPON_KEY % TYPE;
+
+-- Variables for SCD checking
+V_COUPON_TYPE T_DIM_COUPON.COUPON_TYPE % TYPE;
+
+BEGIN
+  PCK_LOG.WRITE_LOG('  Loading data ["LOAD_DIM_COUPON"]');
+
+PCK_LOG.ROWCOUNT('t_dim_store');
+
+-- Loop through each record in the cleaned coupons data, and search for coupons with active (non-expired) versions
+FOR REC IN coupons_cursor LOOP
+  BEGIN
+    SELECT
+      COUPON_KEY,
+      COUPON_TYPE
+    INTO
+      V_COUPON_KEY,
+      V_COUPON_TYPE
+    FROM
+      T_DIM_COUPON
+    WHERE
+      COUPON_NATURAL_KEY = REC.CODE
+      AND IS_EXPIRED_VERSION = 'NO';
+
+-- Check if any SCD2 attributes have changed
+IF REC.TYPE_DESCRIPTION != V_COUPON_TYPE THEN -- Mark the existing version as expired
+UPDATE
+  T_DIM_COUPON
+SET
+  IS_EXPIRED_VERSION = 'YES'
+WHERE
+  COUPON_KEY = V_COUPON_KEY;
+
+-- Insert the new version of the coupon
+INSERT INTO
+  T_DIM_COUPON (
+    COUPON_KEY,
+    COUPON_NATURAL_KEY,
+    COUPON_NAME,
+    COUPON_DISCOUNT_PERCENTAGE,
+    COUPON_DURATION_DAYS,
+    COUPON_TYPE
+  )
+VALUES
+  (
+    SEQ_DIM_COUPON.NEXTVAL,
+    REC.CODE,
+    REC.NAME,
+    REC.DISCOUNT,
+    REC.DURATION_DAYS,
+    REC.TYPE_DESCRIPTION
+  );
+
+-- Increment new versions counter
+V_NEW_VERSIONS := V_NEW_VERSIONS + 1;
+
+ELSE -- If no SCD2 attributes changed, update SCD1 attributes
+UPDATE
+  T_DIM_COUPON
+SET
+  COUPON_NAME = REC.NAME,
+  COUPON_DISCOUNT_PERCENTAGE = REC.DISCOUNT,
+  COUPON_DURATION_DAYS = REC.DURATION_DAYS
+WHERE
+  COUPON_KEY = V_COUPON_KEY;
+
+-- Increment old versions counter
+V_OLD_VERSIONS := V_OLD_VERSIONS + 1;
+
+END IF;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN -- If no active version exists, insert as a new coupon
+INSERT INTO
+  T_DIM_COUPON (
+    COUPON_KEY,
+    COUPON_NATURAL_KEY,
+    COUPON_NAME,
+    COUPON_DISCOUNT_PERCENTAGE,
+    COUPON_DURATION_DAYS,
+    COUPON_TYPE,
+    IS_EXPIRED_VERSION
+  )
+VALUES
+  (
+    SEQ_DIM_COUPON.NEXTVAL,
+    REC.CODE,
+    REC.NAME,
+    REC.DISCOUNT,
+    REC.DURATION_DAYS,
+    REC.TYPE_DESCRIPTION,
+    'NO'
+  );
+
+-- Increment new coupons counter
+V_NEW_COUPONS := V_NEW_COUPONS + 1;
+
+END;
+END LOOP;
+
+-- RECORDS SOME STATISTICS CONCERNING LOADED COUPONS
+PCK_LOG.WRITE_LOG(
+  '    ' || v_OLD_VERSIONS || ' old coupon(s) updated in SCD1 attributes',
+  '    ' || V_NEW_VERSIONS || ' old coupon(s) got new version(s) (old have expired)'
+);
+
+PCK_LOG.WRITE_LOG(
+  '    ' || V_NEW_COUPONS || ' new coupon(s) found and loaded',
+  '    Done!'
+);
+
+PCK_LOG.ROWCOUNT('T_DIM_COUPON');
+
+EXCEPTION
+  WHEN OTHERS THEN PCK_LOG.WRITE_UNCOMPLETE_TASK_MSG;
+
+RAISE e_load;
+
+END;
+```
+
+Call `load_coupon` in main
+
+```sql
+-- ...
+load_dim_coupon;
+load_fact_table;
+```
+
+Change `T_FACT_LINEOFSALE` with new key
+
+<!-- TODO -->
+
+**Load Validation Steps**:
+
+```sql
+BEGIN
+    PCK_LOAD.main(TRUE, TRUE);
+END;
+/
+
+SELECT * FROM T_DIM_COUPON; -- Verify dimensional data
+SELECT * FROM T_FACT_LINEOFSALE; -- Validate related data
+SELECT * FROM T_LOG_ETL; -- Check logs for errors
+```
