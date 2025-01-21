@@ -36,8 +36,6 @@ O que é que não está totalmente correto nesta frase? Justifique, dando um exe
 
 ## Prova Escrita 2 - 2021/22
 
-**6.** Considere as seguinte descrições de lock modes existentes no Java EE:
-
 **5.** Descreva duas situações concretas em que seria claramente vantajoso optar-se pela utilização do padrão Table Module em vez do padrão Domain Model.
 
 **6.** Dê um exemplo de uma aplicação web onde seria mais difícil de se implementar um Front Controller.
@@ -198,7 +196,7 @@ Exception in thread "main" org.hibernate.LazyInitializationException: failed to 
 
 **b)** Descreva com exemplos 3 conclusões que se podem retirar do gráfico.
 
-**7.** Para desenvolver uma aplicação web "cliente" para uma plataforma digital do tipo e- commerce loja virtual, por que tipo de Controller optaria para controlar a lógica de apresentação? Justifique, dando exemplos que reforcem a sua escolha.
+**7.** Para desenvolver uma aplicação web "cliente" para uma plataforma digital do tipo e-commerce loja virtual, por que tipo de Controller optaria para controlar a lógica de apresentação? Justifique, dando exemplos que reforcem a sua escolha.
 
 **8.** Considere o seguinte trecho de código Jakarta EE:
 
